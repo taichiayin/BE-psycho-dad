@@ -11,11 +11,11 @@ type User struct {
 	Avatar string `json:userAvatar`
 }
 
-func GetAllUsers() []User {
+func GetAllUsers() utils.ResponseStruct {
 	var users []User
 	config.Conn.Find(&users)
 	// utils.HandleResponse(users)
-
+	// fmt.Println(users)
 	return utils.HandleResponse(users)
 }
 

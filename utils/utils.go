@@ -1,12 +1,17 @@
 package utils
 
-type responseStruct struct {
+import (
+	"fmt"
+)
+
+type ResponseStruct struct {
 	code    int
 	message string
 	data    interface{}
 }
 
-func HandleResponse(data) responseStruct {
+func HandleResponse(data interface{}) ResponseStruct {
+	fmt.Println(data)
 
-	return responseStruct{code: 1, message: "Successful", data: &data}
+	return ResponseStruct{code: 1, message: "Successful", data: &data}
 }

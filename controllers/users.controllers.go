@@ -12,13 +12,13 @@ func FindAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-func PostUser(c *gin.Context) {
-	user := models.User{}
-	err := c.BindJSON(&user)
-	if err != nil {
-		c.JSON(http.StatusNotAcceptable, "Error: "+err.Error())
-		return
-	}
-	newUser := models.CreateUser(user)
-	c.JSON(http.StatusOK, newUser)
-}
+// func PostUser(c *gin.Context) {
+// 	user := models.User{}
+// 	err := c.BindJSON(&user)
+// 	if err != nil {
+// 		c.JSON(http.StatusNotAcceptable, "Error: "+err.Error())
+// 		return
+// 	}
+// 	newUser := models.CreateUser(user)
+// 	c.JSON(http.StatusOK, newUser)
+// }
