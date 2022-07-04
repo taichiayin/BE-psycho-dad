@@ -18,4 +18,5 @@ func StartUp() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }

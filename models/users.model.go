@@ -2,29 +2,53 @@ package models
 
 import (
 	"psycho-dad/config"
-	"psycho-dad/utils"
 )
 
 type User struct {
-	Id     int    `json:userId`
-	Name   string `json:userName`
-	Avatar string `json:userAvatar`
+	Id     int    `json:"userId"`
+	Name   string `json:"userName"`
+	Avatar string `json:"userAvatar"`
 }
 
-func GetAllUsers() utils.ResponseStruct {
+func GetAllUsers() []User {
+
 	var users []User
 	config.Conn.Find(&users)
-	// utils.HandleResponse(users)
-	// fmt.Println(users)
-	return utils.HandleResponse(users)
+
+	return users
 }
 
-// func CreateUser(user User) string{
-// 	res := config.Conn.Create(&user)
+func GetUserById(userId int) User {
+	var user User
+	config.Conn.Where("id = ?", userId).First(&user)
 
-// 	if res.Error != nil {
-// 		log.Fatalln(res.Error)
-// 	}
+	return user
+}
 
-// 	return "Su"
-// }
+func CreateUser(user User) string {
+	err := config.Conn.Create(&user).Error
+	if err != nil {
+		return "Error" + err.Error()
+	}
+
+	return "CREATE SUCCESSFUL"
+}
+
+func UpdateUser(userId int, user User) string {
+	err := config.Conn.Model(&user).Omit("id").Where("id = ?", userId).Updates(user).Error
+	if err != nil {
+		return "Error" + err.Error()
+	}
+
+	return "UPDATE SUCCESSFUL"
+}
+
+func DeleteUser(userId int) string {
+	user := User{}
+	err := config.Conn.Where("id = ?", userId).Delete(&user).Error
+	if err != nil {
+		return "Error" + err.Error()
+	}
+
+	return "DELETE SUCCESSFUL"
+}
