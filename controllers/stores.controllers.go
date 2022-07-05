@@ -15,7 +15,7 @@ func GetAllStore(c *gin.Context) {
 
 func GetStoreById(c *gin.Context) {
 	storeId, _ := strconv.Atoi(c.Param("id"))
-	user := models.GetUserById(storeId)
+	user := models.GetStoreById(storeId)
 	c.JSON(http.StatusOK, user)
 }
 

@@ -10,6 +10,9 @@ type Store struct {
 	Phone     string `json:"phone"`
 	Mobile    string `json:"mobile"`
 	Email     string `json:"email"`
+	OpenTime1 string `json:"openTime1"`
+	OpenTime2 string `json:"openTime2"`
+	OpenTime3 string `json:"openTime3"`
 	UserId    int    `json:"userId"`
 }
 
@@ -20,9 +23,9 @@ func GetAllStores() []Store {
 	return stores
 }
 
-func GetStroeById(storeId int) Store {
+func GetStoreById(storeId int) Store {
 	var store Store
-	config.Conn.Where("id = ?").First(&store)
+	config.Conn.Where("id = ?", storeId).First(&store)
 
 	return store
 }

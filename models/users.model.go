@@ -11,7 +11,6 @@ type User struct {
 }
 
 func GetAllUsers() []User {
-
 	var users []User
 	config.Conn.Find(&users)
 
