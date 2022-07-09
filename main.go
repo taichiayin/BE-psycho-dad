@@ -15,6 +15,7 @@ func main() {
 	routes.AddThumbsRouter(v1)
 	routes.AddStoresRouter(v1)
 	routes.AddFavoritesRouter(v1)
+	routes.AddTypesRouter(v1)
 
 	go func() {
 		// 連接資料庫

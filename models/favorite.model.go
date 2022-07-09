@@ -15,7 +15,7 @@ func GetAllFavorites() []Favorite {
 	return favorites
 }
 
-func GetFavoriteByUser(userId int) []Favorite {
+func GetFavoritesByUser(userId int) []Favorite {
 	var favorites []Favorite
 	config.Conn.Where("user_id = ?", userId).Find(&favorites)
 
@@ -32,8 +32,8 @@ func CreateFavorite(favorite Favorite) string {
 }
 
 func DeleteFavorite(favoriteId int) string {
-	var favorites []Favorite
-	err := config.Conn.Where("id = ?", favoriteId).Delete(&favorites).Error
+	favorite := Favorite{}
+	err := config.Conn.Where("id = ?", favoriteId).Delete(&favorite).Error
 	if err != nil {
 		return "Error :" + err.Error()
 	}

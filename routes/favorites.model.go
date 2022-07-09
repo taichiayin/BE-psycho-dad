@@ -7,8 +7,9 @@ import (
 )
 
 func AddFavoritesRouter(r *gin.RouterGroup) {
-	user := r.Group("/favorites")
-	user.GET("/", controllers.GetAllFavorites)
-	user.POST("/", controllers.CreateFavorite)
-	user.DELETE("/:favoriteId", controllers.DeleteFavorite)
+	favorite := r.Group("/favorites")
+	favorite.GET("/", controllers.GetAllFavorites)
+	favorite.GET("/:userId", controllers.GetFavoritesByUser)
+	favorite.POST("/", controllers.CreateFavorite)
+	favorite.DELETE("/:favoriteId", controllers.DeleteFavorite)
 }

@@ -13,6 +13,13 @@ func GetAllFavorites(c *gin.Context) {
 	c.JSON(http.StatusOK, favorites)
 }
 
+func GetFavoritesByUser(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.Param("userId"))
+	res := models.GetFavoritesByUser(userId)
+
+	c.JSON(http.StatusOK, res)
+}
+
 func CreateFavorite(c *gin.Context) {
 	favorite := models.Favorite{}
 	err := c.BindJSON(&favorite)
