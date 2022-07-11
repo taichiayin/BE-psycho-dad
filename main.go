@@ -16,6 +16,8 @@ func main() {
 	routes.AddStoresRouter(v1)
 	routes.AddFavoritesRouter(v1)
 	routes.AddTypesRouter(v1)
+	routes.AddCountiesRouter(v1)
+	routes.AddDistrictsRouter(v1)
 
 	go func() {
 		// 連接資料庫

@@ -3,20 +3,21 @@ package models
 import "psycho-dad/config"
 
 type District struct {
-	Id   int `json:"favoriteId"`
-	Name int `json:"name"`
+	Id       int    `json:"districtId"`
+	CountyId int    `json:"countyId"`
+	Name     string `json:"name"`
 }
 
-func GetAllDistrict() []District {
+func GetAllDistricts() []District {
 	var districts []District
 	config.Conn.Find(&districts)
 
 	return districts
 }
 
-func GetDistrictsByUser(districtId int) District {
+func GetDistrictById(districtId int) District {
 	district := District{}
-	config.Conn.Where("user_id = ?", districtId).Find(&district)
+	config.Conn.Where("id = ?", districtId).Find(&district)
 
 	return district
 }
@@ -28,6 +29,14 @@ func CreateDistrict(district District) string {
 	}
 
 	return "CREATE SUCCESSFUL"
+}
+
+func UpdateDistrict(districtId int, district District) string {
+	err := config.Conn.Model(&district).Where("id = ?", districtId).Updates(district).Error
+	if err != nil {
+		return "Error :" + err.Error()
+	}
+	return "UPDATE SUCCESSFUL"
 }
 
 func DeleteDistrict(typeId int) string {

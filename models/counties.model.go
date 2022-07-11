@@ -3,20 +3,20 @@ package models
 import "psycho-dad/config"
 
 type County struct {
-	Id   int `json:"favoriteId"`
-	Name int `json:"name"`
+	Id   int    `json:"countyId"`
+	Name string `json:"name"`
 }
 
-func GetAllCountys() []County {
-	var countys []County
-	config.Conn.Find(&countys)
+func GetAllCounties() []County {
+	var counties []County
+	config.Conn.Find(&counties)
 
-	return countys
+	return counties
 }
 
 func GetCountyById(countyId int) County {
 	var county County
-	config.Conn.Where("user_id = ?", countyId).Find(&county)
+	config.Conn.Where("id = ?", countyId).Find(&county)
 
 	return county
 }
