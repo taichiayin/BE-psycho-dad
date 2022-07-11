@@ -5,9 +5,9 @@ import (
 )
 
 type User struct {
-	Id     int    `json:"userId"`
-	Name   string `json:"userName"`
-	Avatar string `json:"userAvatar"`
+	Id    int    `json:"userId"`
+	Name  string `json:"userName"`
+	Fb_id string `json:"fbId"`
 }
 
 func GetAllUsers() []User {
@@ -27,7 +27,7 @@ func GetUserById(userId int) User {
 func CreateUser(user User) string {
 	err := config.Conn.Create(&user).Error
 	if err != nil {
-		return "Error" + err.Error()
+		return err.Error()
 	}
 
 	return "CREATE SUCCESSFUL"
@@ -36,7 +36,7 @@ func CreateUser(user User) string {
 func UpdateUser(userId int, user User) string {
 	err := config.Conn.Model(&user).Omit("id").Where("id = ?", userId).Updates(user).Error
 	if err != nil {
-		return "Error" + err.Error()
+		return err.Error()
 	}
 
 	return "UPDATE SUCCESSFUL"
