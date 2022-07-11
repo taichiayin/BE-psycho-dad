@@ -8,8 +8,8 @@ import (
 
 func AddFavoritesRouter(r *gin.RouterGroup) {
 	favorite := r.Group("/favorites")
-	favorite.GET("/", controllers.GetAllFavorites)
+	favorite.GET("", controllers.GetAllFavorites)
 	favorite.GET("/:userId", controllers.GetFavoritesByUser)
-	favorite.POST("/", controllers.CreateFavorite)
+	favorite.POST("", controllers.CreateFavorite)
 	favorite.DELETE("/:favoriteId", controllers.DeleteFavorite)
 }

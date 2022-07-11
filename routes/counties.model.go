@@ -8,9 +8,9 @@ import (
 
 func AddCountiesRouter(r *gin.RouterGroup) {
 	counties := r.Group("/counties")
-	counties.GET("/", controllers.GetAllCounties)
+	counties.GET("", controllers.GetAllCounties)
 	counties.GET("/:countyId", controllers.GetCountyById)
-	counties.POST("/", controllers.CreateCounty)
+	counties.POST("", controllers.CreateCounty)
 	counties.PUT("/:countyId", controllers.UpdateCounty)
 	counties.DELETE("/:countyId", controllers.DeleteCounty)
 }

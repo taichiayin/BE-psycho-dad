@@ -8,9 +8,9 @@ import (
 
 func AddStoresRouter(r *gin.RouterGroup) {
 	user := r.Group("/stores")
-	user.GET("/", controllers.GetAllStore)
+	user.GET("", controllers.GetAllStore)
 	user.GET("/:id", controllers.GetStoreById)
-	user.POST("/", controllers.CreateStore)
+	user.POST("", controllers.CreateStore)
 	user.PUT("/:id", controllers.UpdateStore)
 	user.DELETE("/:id", controllers.DeleteStore)
 }
