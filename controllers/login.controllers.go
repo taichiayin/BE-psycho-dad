@@ -98,24 +98,24 @@ func getUserInfo(userId string, accessToken string) (*UserInfoResp, error) {
 }
 
 // db新增用戶
-func addUserHandle(userInfo *UserInfoResp) error {
+func addUserHandle(userInfo *UserInfoResp) {
 	fmt.Println("addUserHanlde", userInfo)
-	userID, _ := strconv.Atoi(userInfo.Id)
+	fbId, _ := strconv.Atoi(userInfo.Id)
 
-	_, err := models.GetUserByFBId(userID)
+	_, err := models.GetUserByFBId(fbId)
 
-	// 找不到新增用戶
+	userStrcut := models.User{}
+	userInfoJson, _ := json.Marshal(userInfo)
+	json.Unmarshal([]byte(userInfoJson), &userStrcut)
+	userStrcut.FbId = userInfo.Id
+	// 找不到新增用戶，已存在就更新
 	if err != nil {
-		userStrcut := models.User{}
-		userInfoJson, _ := json.Marshal(userInfo)
-		json.Unmarshal([]byte(userInfoJson), &userStrcut)
-		userStrcut.FbId = userInfo.Id
-		fmt.Println(userStrcut)
-
+		fmt.Println("create user")
 		models.CreateUser(userStrcut)
-		return nil
+	} else {
+		fmt.Println("update user")
+		models.UpdateUserByFBId(fbId, userStrcut)
 	}
-	return errors.New("用戶已存在")
 }
 
 // 驗證前端給的token是否有效，並且判斷新增用戶詳情
@@ -163,12 +163,7 @@ func ValidateFbToken(c *gin.Context) {
 	}
 
 	// db新增用戶
-	// userInfoJson := UserInfoResp{}
-	err = addUserHandle(userInfo)
-	if err != nil {
-		c.JSON(http.StatusOK, utils.RespError(err.Error()))
-		return
-	}
+	addUserHandle(userInfo)
 
 	c.JSON(http.StatusOK, utils.RespSuccess(userInfo))
 

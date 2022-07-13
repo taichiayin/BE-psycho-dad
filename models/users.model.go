@@ -43,6 +43,15 @@ func GetUserByFBId(id int) (*User, error) {
 	return user, nil
 }
 
+func UpdateUserByFBId(id int, user User) string {
+	err := config.Conn.Model(&user).Omit("id").Where("fb_id = ?", id).Updates(user).Error
+	if err != nil {
+		return err.Error()
+	}
+
+	return "UPDATE SUCCESSFUL"
+}
+
 func CreateUser(user User) string {
 	err := config.Conn.Create(&user).Error
 	if err != nil {
