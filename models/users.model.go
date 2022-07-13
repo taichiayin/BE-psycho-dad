@@ -1,13 +1,15 @@
 package models
 
 import (
+	"fmt"
 	"psycho-dad/config"
 )
 
 type User struct {
-	Id    int    `json:"userId"`
-	Name  string `json:"userName"`
-	Fb_id string `json:"fbId"`
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	FbId  string `json:"fbId"`
 }
 
 func GetAllUsers() []User {
@@ -17,11 +19,28 @@ func GetAllUsers() []User {
 	return users
 }
 
-func GetUserById(userId int) User {
-	var user User
-	config.Conn.Where("id = ?", userId).First(&user)
+func GetUserById(id int) (*User, error) {
+	user := &User{}
+	err := config.Conn.Where("id = ?", id).First(user).Error
 
-	return user
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func GetUserByFBId(id int) (*User, error) {
+	user := &User{}
+	err := config.Conn.Where("fb_id = ?", id).First(user).Error
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func CreateUser(user User) string {

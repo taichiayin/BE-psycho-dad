@@ -15,7 +15,13 @@ func FindAllUsers(c *gin.Context) {
 
 func FindByUserId(c *gin.Context) {
 	userId, _ := strconv.Atoi(c.Param("id"))
-	user := models.GetUserById(userId)
+	user, err := models.GetUserById(userId)
+
+	if err != nil {
+		c.String(http.StatusOK, err.Error())
+		return
+	}
+
 	c.JSON(http.StatusOK, user)
 }
 

@@ -1,8 +1,13 @@
 package controllers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"psycho-dad/models"
+	"psycho-dad/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/parnurzeal/gorequest"
@@ -12,27 +17,108 @@ type FbToken struct {
 	AccessToken string `json:"accessToken"`
 }
 
-// FB secret
-var app_id = "603757541009890"
-var app_secret = "07954a0eca99605ccbfd7f073e2c552b"
+type AppToken struct {
+	AppToken string `json:"access_token"`
+}
 
-func GetFBAppToken(c *gin.Context) {
-	strURL := "https://graph.facebook.com/v14.0/oauth/access_token?client_id=" + app_id +
-		"&client_secret=" + app_secret +
-		"&grant_type=client_credentials"
+type ValidResp struct {
+	Data *ValidRespData `json:"data"`
+}
+
+type ValidRespData struct {
+	IsValid bool   `json:"is_valid"`
+	UserId  string `json:"user_id"`
+}
+
+type UserInfoResp struct {
+	Id      string       `json:"id"`
+	Name    string       `json:"name"`
+	Email   string       `json:"email"`
+	Picture *PictureData `json:"picture"`
+}
+
+type PictureData struct {
+	Data *Picture `json:"data"`
+}
+
+type Picture struct {
+	Url string `json:"url"`
+}
+
+// FB secret
+const app_id = "603757541009890"
+const app_secret = "07954a0eca99605ccbfd7f073e2c552b"
+const fbApiUrl_accessToken = "https://graph.facebook.com/v14.0/oauth/access_token?client_id=%s&client_secret=%s&grant_type=%s"
+const fbApiUrl_debugToken = "https://graph.facebook.com/v14.0/debug_token?input_token=%s&access_token=%s"
+
+// const fbApiUrl_userInfo = "https://graph.facebook.com/v14.0/%s"
+const fbApiUrl_userInfo = "https://graph.facebook.com/%s?fields=id,name,email,picture&access_token=%s"
+
+// 獲取應用程式權杖
+func getFBAppToken() (string, error) {
+	strUrl := fmt.Sprintf(fbApiUrl_accessToken, app_id, app_secret, "client_credentials")
+
 	_, body, errs := gorequest.New().
-		Get(strURL).
+		Get(strUrl).
+		End()
+	if errs != nil {
+		return "", errors.New("請求失敗")
+	}
+
+	appToken := AppToken{}
+
+	err := json.Unmarshal([]byte(body), &appToken)
+	if err != nil {
+		return "", errors.New("返回格式錯誤")
+	}
+
+	return appToken.AppToken, nil
+}
+
+// 獲取用戶數據
+func getUserInfo(userId string, accessToken string) (*UserInfoResp, error) {
+	strUrl := fmt.Sprintf(fbApiUrl_userInfo, userId, accessToken)
+
+	_, body, errs := gorequest.New().
+		Get(strUrl).
 		End()
 
 	if errs != nil {
-		c.JSON(http.StatusOK, "error")
-		// return "Error"
+		return nil, errors.New("請求失敗")
 	}
 
-	fmt.Println(body)
-	c.JSON(http.StatusOK, body)
+	userInfo := UserInfoResp{}
+
+	err := json.Unmarshal([]byte(body), &userInfo)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	return &userInfo, nil
 }
 
+// db新增用戶
+func addUserHandle(userInfo *UserInfoResp) error {
+	fmt.Println("addUserHanlde", userInfo)
+	userID, _ := strconv.Atoi(userInfo.Id)
+
+	_, err := models.GetUserByFBId(userID)
+
+	// 找不到新增用戶
+	if err != nil {
+		userStrcut := models.User{}
+		userInfoJson, _ := json.Marshal(userInfo)
+		json.Unmarshal([]byte(userInfoJson), &userStrcut)
+		userStrcut.FbId = userInfo.Id
+		fmt.Println(userStrcut)
+
+		models.CreateUser(userStrcut)
+		return nil
+	}
+	return errors.New("用戶已存在")
+}
+
+// 驗證前端給的token是否有效，並且判斷新增用戶詳情
 func ValidateFbToken(c *gin.Context) {
 	fbToken := FbToken{}
 	err := c.BindJSON(&fbToken)
@@ -40,18 +126,50 @@ func ValidateFbToken(c *gin.Context) {
 		c.JSON(http.StatusOK, err.Error())
 	}
 
-	resp, body, errs := gorequest.New().
-		Get("https://graph.facebook.com/v14.0/debug_token?input_token=" + fbToken.AccessToken +
-			"&access_token=603757541009890|VZYiBRkI99kBBiIGdlbWfl7uJ14").
+	//
+	app_token, err := getFBAppToken()
+	if err != nil {
+		c.JSON(http.StatusOK, err.Error())
+	}
+
+	// 驗證token
+	strUrl := fmt.Sprintf(fbApiUrl_debugToken, fbToken.AccessToken, app_token)
+	_, body, errs := gorequest.New().
+		Get(strUrl).
 		End()
 
 	if errs != nil {
-		c.JSON(http.StatusOK, "Error")
+		errStr := fmt.Sprintf("%v", errs)
+		c.JSON(http.StatusOK, errStr)
 	}
 
-	fmt.Println(resp)
-	fmt.Println(body)
+	validResp := ValidResp{}
 
-	c.JSON(http.StatusOK, body)
+	err = json.Unmarshal([]byte(body), &validResp)
+	if err != nil {
+		c.JSON(http.StatusOK, err.Error())
+	}
+
+	// 無效token返回
+	if !validResp.Data.IsValid {
+		c.JSON(http.StatusOK, validResp)
+		return
+	}
+
+	// 獲取用戶詳情
+	userInfo, err := getUserInfo(validResp.Data.UserId, fbToken.AccessToken)
+	if err != nil {
+		c.String(http.StatusOK, err.Error())
+	}
+
+	// db新增用戶
+	// userInfoJson := UserInfoResp{}
+	err = addUserHandle(userInfo)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(userInfo))
 
 }

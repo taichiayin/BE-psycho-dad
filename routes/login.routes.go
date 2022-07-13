@@ -8,5 +8,5 @@ import (
 
 func AddLoginRouter(r *gin.RouterGroup) {
 	r.POST("/validateFbToken", controllers.ValidateFbToken)
-	r.GET("/getFBAppToken", controllers.GetFBAppToken)
+	// r.GET("/getFBAppToken", controllers.GetFBAppToken)
 }
