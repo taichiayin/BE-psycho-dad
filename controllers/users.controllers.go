@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"psycho-dad/models"
+	"psycho-dad/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +12,8 @@ import (
 
 func FindAllUsers(c *gin.Context) {
 	users := models.GetAllUsers()
-	c.JSON(http.StatusOK, users)
+	fmt.Println("FindAllUsers")
+	c.JSON(http.StatusOK, utils.RespSuccess(users))
 }
 
 func FindByUserId(c *gin.Context) {
@@ -22,7 +25,7 @@ func FindByUserId(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, utils.RespSuccess(user))
 }
 
 func CreateUser(c *gin.Context) {
@@ -33,8 +36,8 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	newUser := models.CreateUser(user)
-	c.JSON(http.StatusOK, newUser)
+	models.CreateUser(user)
+	c.JSON(http.StatusOK, "CREATE SUCCESSFUL")
 }
 
 func UpdateUser(c *gin.Context) {
@@ -45,13 +48,13 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusAccepted, "Error:"+err.Error())
 	}
 
-	newUser := models.UpdateUser(userId, user)
-	c.JSON(http.StatusOK, newUser)
+	models.UpdateUser(userId, user)
+	c.JSON(http.StatusOK, "UPDATE SUCCESSFUL")
 }
 
 func DeleteUser(c *gin.Context) {
 	userId, _ := strconv.Atoi(c.Param("id"))
-	res := models.DeleteUser(userId)
+	models.DeleteUser(userId)
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, "DELETE SUCCESSFUL")
 }
