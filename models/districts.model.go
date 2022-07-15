@@ -8,18 +8,34 @@ type District struct {
 	Name     string `json:"name"`
 }
 
-func GetAllDistricts() []District {
-	var districts []District
-	config.Conn.Find(&districts)
+func GetAllDistricts() (*[]District, error) {
+	districts := &[]District{}
+	err := config.Conn.Find(&districts).Error
+	if err != nil {
+		return nil, err
+	}
 
-	return districts
+	return districts, nil
 }
 
-func GetDistrictById(districtId int) District {
-	district := District{}
-	config.Conn.Where("id = ?", districtId).Find(&district)
+func GetDistrictById(districtId int) (*District, error) {
+	district := &District{}
+	err := config.Conn.Where("id = ?", districtId).Find(district).Error
 
-	return district
+	if err != nil {
+		return nil, err
+	}
+
+	return district, nil
+}
+
+func GetDistrictByCountyId(countyId int) (*[]District, error) {
+	districts := &[]District{}
+	err := config.Conn.Where("county_id = ?", countyId).Find(&districts).Error
+	if err != nil {
+		return nil, err
+	}
+	return districts, nil
 }
 
 func CreateDistrict(district District) string {

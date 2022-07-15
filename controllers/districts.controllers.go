@@ -3,21 +3,48 @@ package controllers
 import (
 	"net/http"
 	"psycho-dad/models"
+	"psycho-dad/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetAllDistricts(c *gin.Context) {
-	districts := models.GetAllDistricts()
-	c.JSON(http.StatusOK, districts)
+	var err error
+	var districts *[]models.District
+
+	countyId, _ := strconv.Atoi(c.Query("countyId"))
+	if countyId == 0 {
+		districts, err = models.GetAllDistricts()
+	} else {
+		districts, err = models.GetDistrictByCountyId(countyId)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
+	c.JSON(http.StatusOK, utils.RespSuccess(districts))
 }
 
 func GetDistrictById(c *gin.Context) {
 	districtId, _ := strconv.Atoi(c.Param("districtId"))
-	res := models.GetDistrictById(districtId)
+	res, err := models.GetDistrictById(districtId)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, utils.RespSuccess(res))
+}
+
+func GetDistrictByCountyId(c *gin.Context) {
+	countyId, _ := strconv.Atoi(c.Query("countyId"))
+	res, err := models.GetDistrictByCountyId(countyId)
+
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(res))
 }
 
 func CreateDistrict(c *gin.Context) {

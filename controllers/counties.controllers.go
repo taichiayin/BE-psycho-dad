@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"psycho-dad/models"
+	"psycho-dad/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,14 +11,14 @@ import (
 
 func GetAllCounties(c *gin.Context) {
 	counties := models.GetAllCounties()
-	c.JSON(http.StatusOK, counties)
+	c.JSON(http.StatusOK, utils.RespSuccess(counties))
 }
 
 func GetCountyById(c *gin.Context) {
 	countyId, _ := strconv.Atoi(c.Param("countyId"))
 	res := models.GetCountyById(countyId)
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, utils.RespSuccess(res))
 }
 
 func CreateCounty(c *gin.Context) {
