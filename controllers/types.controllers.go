@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"psycho-dad/models"
+	"psycho-dad/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,14 +11,17 @@ import (
 
 func GetAllTypes(c *gin.Context) {
 	types := models.GetAllTypes()
-	c.JSON(http.StatusOK, types)
+	c.JSON(http.StatusOK, utils.RespSuccess(types))
 }
 
 func GetTypeById(c *gin.Context) {
 	typeId, _ := strconv.Atoi(c.Param("typeId"))
-	res := models.GetTypeById(typeId)
+	res, err := models.GetTypeById(typeId)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, utils.RespSuccess(res))
 }
 
 func CreateType(c *gin.Context) {
@@ -27,14 +31,20 @@ func CreateType(c *gin.Context) {
 		c.JSON(http.StatusAccepted, "Error: "+err.Error())
 	}
 
-	res := models.CreateType(myType)
+	err = models.CreateType(myType)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, utils.RespSuccess(nil))
 }
 
 func DeleteType(c *gin.Context) {
 	typeId, _ := strconv.Atoi(c.Param("typeId"))
-	res := models.DeleteType(typeId)
+	err := models.DeleteType(typeId)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, utils.RespSuccess(nil))
 }

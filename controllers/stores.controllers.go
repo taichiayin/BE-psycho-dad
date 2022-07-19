@@ -10,10 +10,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetAllStoreForEdit(c *gin.Context) {
+	store := models.Store{}
+	err := c.BindQuery(&store)
+	if err == nil {
+		fmt.Println(store)
+		fmt.Println(store.CountyId)
+	}
+	stores, _ := models.GetAllStores(&store)
+	c.JSON(http.StatusOK, utils.RespSuccess(stores))
+}
+
 func GetAllStore(c *gin.Context) {
 	myLon, _ := strconv.ParseFloat(c.Query("lon"), 64)
 	mylat, _ := strconv.ParseFloat(c.Query("lat"), 64)
-	stores := models.GetAllStores()
+
+	store := models.Store{}
+
+	err := c.ShouldBindQuery(&store)
+
+	if err == nil {
+		fmt.Println(store)
+		// fmt.Println(store.PageIndex)
+	}
+
+	stores, p := models.GetAllStores(&store)
 	fmt.Printf("經度: %f", myLon)
 	fmt.Printf("緯度: %f", mylat)
 	// 計算最短距離，若資料不足則顯示9999
@@ -27,7 +48,7 @@ func GetAllStore(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, utils.RespSuccess(stores))
+	c.JSON(http.StatusOK, utils.PagingRespSuccess(stores, &p))
 }
 
 func GetStoreById(c *gin.Context) {
@@ -48,8 +69,13 @@ func CreateStore(c *gin.Context) {
 		return
 	}
 
-	res := models.CreateStore(store)
-	c.JSON(http.StatusOK, res)
+	err = models.CreateStore(store)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(nil))
 }
 
 func UpdateStore(c *gin.Context) {
@@ -62,10 +88,16 @@ func UpdateStore(c *gin.Context) {
 	err = c.BindJSON(&store)
 	if err != nil {
 		c.JSON(http.StatusOK, "Error:"+err.Error())
+		return
 	}
 
-	res := models.UpdateStore(storeId, store)
-	c.JSON(http.StatusOK, res)
+	err = models.UpdateStore(storeId, store)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(nil))
 }
 
 func DeleteStore(c *gin.Context) {

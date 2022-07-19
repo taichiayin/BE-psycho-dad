@@ -1,10 +1,7 @@
 package models
 
 import (
-	"fmt"
 	"psycho-dad/config"
-
-	"gorm.io/gorm"
 )
 
 type Type struct {
@@ -19,42 +16,39 @@ func GetAllTypes() []Type {
 	return types
 }
 
-func GetTypeById(userId int) Type {
-	myType := Type{}
-	err := config.Conn.Where("id = ?", userId).First(&myType).Error
+func GetTypeById(userId int) (*Type, error) {
+	myType := &Type{}
+	err := config.Conn.Where("id = ?", userId).First(myType).Error
 
-	if err == gorm.ErrRecordNotFound {
-		// return "Not Foun Record"
-		// return
-		fmt.Println("RECORD NOT FOUND")
+	if err != nil {
+		return nil, err
 	}
 
-	return myType
+	return myType, nil
 }
 
-func CreateType(myType Type) string {
+func CreateType(myType Type) error {
 	err := config.Conn.Create(&myType).Error
 	if err != nil {
-		return "Error :" + err.Error()
+		return err
 	}
 
-	return "CREATE SUCCESSFUL"
+	return nil
 }
 
-func UpdateType(typeId int, myType Type) string {
+func UpdateType(typeId int, myType Type) error {
 	err := config.Conn.Model(&myType).Where("id = ?", typeId).Updates(myType).Error
 	if err != nil {
-		return "Error :" + err.Error()
+		return err
 	}
-
-	return "UPDATE SUCCESSFUL"
+	return nil
 }
 
-func DeleteType(typeId int) string {
+func DeleteType(typeId int) error {
 	myType := Type{}
 	err := config.Conn.Where("id = ?", typeId).Delete(&myType).Error
 	if err != nil {
-		return "Error :" + err.Error()
+		return err
 	}
-	return "DELETE SUCCESSFUL"
+	return nil
 }
