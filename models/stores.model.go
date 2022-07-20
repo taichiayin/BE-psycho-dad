@@ -41,7 +41,7 @@ func GetAllStores(c *Store) ([]Store, proto.Paging) {
 		db = db.Where("id = ?", c.Id)
 	}
 	if c.Name != "" {
-		db = db.Where("name = ?", c.Name)
+		db = db.Where("name like ?", "%"+c.Name+"%")
 	}
 	if c.TypeId != 0 {
 		db = db.Where("type_id = ?", c.TypeId)

@@ -4,12 +4,14 @@ import (
 	"psycho-dad/config"
 	"psycho-dad/routes"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	// "github.com/unrolled/secure"
 )
 
 func main() {
 	r := gin.Default()
+	r.Use(cors.Default())
 	// https
 	// r.Use(TlsHandler())
 	v1 := r.Group("/v1")
@@ -22,6 +24,8 @@ func main() {
 	routes.AddCountiesRouter(v1)
 	routes.AddDistrictsRouter(v1)
 	routes.AddLoginRouter(v1)
+	routes.AddUploadRouter(v1)
+	routes.AddImgRouter(v1)
 
 	go func() {
 		// 連接資料庫
