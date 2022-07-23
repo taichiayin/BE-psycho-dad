@@ -11,5 +11,5 @@ func AddFavoritesRouter(r *gin.RouterGroup) {
 	favorite.GET("", controllers.GetAllFavorites)
 	favorite.GET("/:userId", controllers.GetFavoritesByUser)
 	favorite.POST("", controllers.CreateFavorite)
-	favorite.DELETE("/:favoriteId", controllers.DeleteFavorite)
+	favorite.DELETE("", controllers.DeleteFavorite)
 }

@@ -46,6 +46,7 @@ func UploadProcess(c *gin.Context) ([]*UploadFile, error) {
 	// sess := s.GetSession()
 	formInfo := &FormData{}
 	c.Bind(formInfo)
+	fmt.Println(formInfo)
 
 	err := c.Request.ParseMultipartForm(MAX_FILE_SIZE)
 	if err != nil {
@@ -82,6 +83,7 @@ func UploadProcess(c *gin.Context) ([]*UploadFile, error) {
 		filename := fmt.Sprintf("%v%v", formInfo.FileName, ext)
 		filepath := fmt.Sprintf("/%v", formInfo.StoreId)
 		filepathName := fmt.Sprintf("%v/%v", filepath, filename)
+		fmt.Println(filepathName)
 		// rstr := random2.RandomAlphabetic(4)
 		// filename := fmt.Sprintf("%v%v%v", rstr, time.Now().UnixNano(), ext)
 		// filepath := fmt.Sprintf("/%v/%v", sess.UserType, sess.LoginID)
@@ -107,7 +109,7 @@ func UploadProcess(c *gin.Context) ([]*UploadFile, error) {
 		upfile := &UploadFile{
 			// OriginalFileName: originalFileName,
 			// NewFileName:      filename,
-			Url: "/v1" + localPath + filepathName,
+			Url: localPath + filepathName,
 		}
 
 		uploadFiles = append(uploadFiles, upfile)

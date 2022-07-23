@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"psycho-dad/models"
+	"psycho-dad/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -15,26 +16,49 @@ func GetAllFavorites(c *gin.Context) {
 
 func GetFavoritesByUser(c *gin.Context) {
 	userId, _ := strconv.Atoi(c.Param("userId"))
-	res := models.GetFavoritesByUser(userId)
+	res, err := models.GetFavoritesByUser(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+		return
+	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, utils.RespSuccess(res))
 }
 
 func CreateFavorite(c *gin.Context) {
 	favorite := models.Favorite{}
 	err := c.BindJSON(&favorite)
 	if err != nil {
-		c.JSON(http.StatusAccepted, "Error: "+err.Error())
+		c.JSON(http.StatusAccepted, utils.RespError(err.Error()))
+		return
 	}
 
-	res := models.CreateFavorite(favorite)
+	err = models.CreateFavorite(favorite)
 
-	c.JSON(http.StatusOK, res)
+	if err != nil {
+		c.JSON(http.StatusAccepted, utils.RespError(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(err))
 }
 
 func DeleteFavorite(c *gin.Context) {
-	favoriteId, _ := strconv.Atoi(c.Param("favoriteId"))
-	res := models.DeleteFavorite(favoriteId)
+	// favoriteId, _ := strconv.Atoi(c.Param("favoriteId"))
+	favorite := models.Favorite{}
 
-	c.JSON(http.StatusOK, res)
+	err := c.ShouldBind(&favorite)
+	if err != nil {
+		c.JSON(http.StatusAccepted, utils.RespError(err.Error()))
+		return
+	}
+
+	err = models.DeleteFavorite(favorite)
+
+	if err != nil {
+		c.JSON(http.StatusAccepted, utils.RespError(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(err))
 }

@@ -28,53 +28,86 @@ type Store struct {
 	Lat                float64 `json:"lat"`
 	Dis                float64 `json:"dis" gorm:"-"`
 	IsClosePermanently bool    `json:"isClosePermanently"`
-	PageIndex          int
-	PageSize           int
+	DefaultImg         string  `json:"defaultImg" gorm:"-"`
 }
 
-func GetAllStores(c *Store) ([]Store, proto.Paging) {
+type StoreApi struct {
+	Id                 int     `json:"storeId"`
+	Name               string  `json:"storeName"`
+	Introduce          string  `json:"introduce"`
+	TypeId             int     `json:"typeId"`
+	TypeName           string  `json:"typeName"`
+	CountyId           int     `json:"countyId"`
+	CountyName         string  `json:"countyName"`
+	DistrictId         int     `json:"districtId"`
+	DistrictName       string  `json:"districtName"`
+	Address            string  `json:"address"`
+	Phone              string  `json:"phone"`
+	Mobile             string  `json:"mobile"`
+	Email              string  `json:"email"`
+	UserId             int     `json:"userId"`
+	IsDads             bool    `json:"isDads"`
+	IsDadsRecommend    bool    `json:"isDadsRecommend"`
+	WebSite            string  `json:"webSite"`
+	Lon                float64 `json:"lon"`
+	Lat                float64 `json:"lat"`
+	Dis                float64 `json:"dis" gorm:"-"`
+	IsClosePermanently bool    `json:"isClosePermanently"`
+	DefaultImg         string  `json:"defaultImg"`
+	FavoriteId         int     `json:"favoriteId"`
+}
 
-	stores := []Store{}
-	db := config.Conn.Model(&stores)
+func GetAllStores(storeApi *StoreApi, page int, size int, userId string) ([]StoreApi, proto.Paging) {
 
-	if c.Id != 0 {
-		db = db.Where("id = ?", c.Id)
+	storeApis := []StoreApi{}
+	db := config.Conn.Table("stores").
+		Select("stores.*, files.default_img, types.name as type_name, counties.name as county_name, districts.name as district_name , favorites.id as favorite_id")
+
+	if storeApi.Id != 0 {
+		db = db.Where("id = ?", storeApi.Id)
 	}
-	if c.Name != "" {
-		db = db.Where("name like ?", "%"+c.Name+"%")
+	if storeApi.Name != "" {
+		db = db.Where("name like ?", "%"+storeApi.Name+"%")
 	}
-	if c.TypeId != 0 {
-		db = db.Where("type_id = ?", c.TypeId)
+	if storeApi.TypeId != 0 {
+		db = db.Where("type_id = ?", storeApi.TypeId)
 	}
-	if c.CountyId != 0 {
-		db = db.Where("county_id = ?", c.CountyId)
+	if storeApi.CountyId != 0 {
+		db = db.Where("county_id = ?", storeApi.CountyId)
 	}
-	if c.TypeId != 0 {
-		db = db.Where("type_id = ?", c.TypeId)
+	if storeApi.TypeId != 0 {
+		db = db.Where("type_id = ?", storeApi.TypeId)
 	}
-	if c.DistrictId != 0 {
-		db = db.Where("district_id = ?", c.DistrictId)
+	if storeApi.DistrictId != 0 {
+		db = db.Where("district_id = ?", storeApi.DistrictId)
 	}
-	if c.UserId != 0 {
-		db = db.Where("user_id = ?", c.UserId)
+	if storeApi.UserId != 0 {
+		db = db.Where("user_id = ?", storeApi.UserId)
 	}
-	if c.IsDads {
-		db = db.Where("is_dads = ?", c.IsDads)
+	if storeApi.IsDads {
+		db = db.Where("is_dads = ?", storeApi.IsDads)
 	}
-	if c.IsDadsRecommend {
-		db = db.Where("is_dads_recommend = ?", c.IsDadsRecommend)
+	if storeApi.IsDadsRecommend {
+		db = db.Where("is_dads_recommend = ?", storeApi.IsDadsRecommend)
 	}
-	if c.IsClosePermanently {
-		db = db.Where("is_close_permanently = ?", c.IsClosePermanently)
+	if storeApi.IsClosePermanently {
+		db = db.Where("is_close_permanently = ?", storeApi.IsClosePermanently)
 	}
 
-	page := proto.Paging{}
-	page.PageIndex = int64(c.PageIndex)
-	page.PageSize = int64(c.PageSize)
+	// Join files Table
+	db.Joins("left join files on files.store_id = stores.id").
+		Joins("left join types on types.id = stores.type_id").
+		Joins("left join counties on counties.id = stores.county_id ").
+		Joins("left join districts on districts.id = stores.district_id ").
+		Joins("left join favorites on favorites.store_id = stores.id and favorites.user_id = ?", userId)
 
-	FindPage(db, &stores, &page)
+	paging := proto.Paging{}
+	paging.PageIndex = int64(page)
+	paging.PageSize = int64(size)
 
-	return stores, page
+	FindPage(db, &storeApis, &paging)
+
+	return storeApis, paging
 }
 
 func GetStoreById(storeId int) (*Store, error) {
@@ -88,11 +121,39 @@ func GetStoreById(storeId int) (*Store, error) {
 }
 
 func CreateStore(store Store) error {
-	err := config.Conn.Create(&store).Error
 
+	// begin a transaction
+	tx := config.Conn.Begin()
+	// 防止沒有rollback被卡死
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err := tx.Create(&store).Error
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+
+	file := &File{}
+	file.DefaultImg = store.DefaultImg
+	// file.Img1 = store.File.Img1
+	// file.Img2 = store.File.Img2
+	file.StoreId = store.Id
+	err = tx.Create(file).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	return nil
 }
 
@@ -107,10 +168,62 @@ func DeleteStore(storeId int) string {
 }
 
 func UpdateStore(storeId int, store Store) error {
-	err := config.Conn.Where("id = ?", storeId).Save(store).Error
+
+	tx := config.Conn.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err := tx.Where("id = ?", storeId).Save(store).Error
+
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+
+	file := &File{}
+
+	err = tx.Where(`store_id = ?`, store.Id).First(file).Error
+	file.DefaultImg = store.DefaultImg
+	file.StoreId = store.Id
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+
+			err := tx.Table("files").Create(file).Error
+
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
+			err = tx.Commit().Error
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
+			return nil
+		}
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Table("files").Where(`store_id = ?`, file.StoreId).Updates(file).Error
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	return nil
 }
 

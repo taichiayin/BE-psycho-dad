@@ -11,44 +11,50 @@ import (
 )
 
 func GetAllStoreForEdit(c *gin.Context) {
-	store := models.Store{}
-	err := c.BindQuery(&store)
+	page, _ := strconv.Atoi(c.Query("page"))
+	size, _ := strconv.Atoi(c.Query("size"))
+
+	storeApi := models.StoreApi{}
+	err := c.BindQuery(&storeApi)
 	if err == nil {
-		fmt.Println(store)
-		fmt.Println(store.CountyId)
+		fmt.Println(storeApi)
+		fmt.Println(storeApi.CountyId)
 	}
-	stores, _ := models.GetAllStores(&store)
-	c.JSON(http.StatusOK, utils.RespSuccess(stores))
+	storeApis, _ := models.GetAllStores(&storeApi, page, size, "")
+	c.JSON(http.StatusOK, utils.RespSuccess(storeApis))
 }
 
 func GetAllStore(c *gin.Context) {
 	myLon, _ := strconv.ParseFloat(c.Query("lon"), 64)
 	mylat, _ := strconv.ParseFloat(c.Query("lat"), 64)
+	page, _ := strconv.Atoi(c.Query("page"))
+	size, _ := strconv.Atoi(c.Query("size"))
+	userId := c.Query("id")
 
-	store := models.Store{}
+	storeApi := models.StoreApi{}
 
-	err := c.ShouldBindQuery(&store)
+	err := c.ShouldBindQuery(&storeApi)
 
 	if err == nil {
-		fmt.Println(store)
+		fmt.Println(storeApi)
 		// fmt.Println(store.PageIndex)
 	}
 
-	stores, p := models.GetAllStores(&store)
+	storeApis, p := models.GetAllStores(&storeApi, page, size, userId)
 	fmt.Printf("經度: %f", myLon)
 	fmt.Printf("緯度: %f", mylat)
 	// 計算最短距離，若資料不足則顯示9999
-	for i := 0; i < len(stores); i++ {
-		if myLon != 0 && mylat != 0 && stores[i].Lon != 0 && stores[i].Lat != 0 {
-			dis := utils.CalGeoDistance(float64(myLon), float64(mylat), stores[i].Lon, stores[i].Lat) / 1000
+	for i := 0; i < len(storeApis); i++ {
+		if myLon != 0 && mylat != 0 && storeApis[i].Lon != 0 && storeApis[i].Lat != 0 {
+			dis := utils.CalGeoDistance(float64(myLon), float64(mylat), storeApis[i].Lon, storeApis[i].Lat) / 1000
 			disKM, _ := strconv.ParseFloat(fmt.Sprintf("%.3f", dis), 64)
-			stores[i].Dis = disKM
+			storeApis[i].Dis = disKM
 		} else {
-			stores[i].Dis = 9999
+			storeApis[i].Dis = 9999
 		}
 	}
 
-	c.JSON(http.StatusOK, utils.PagingRespSuccess(stores, &p))
+	c.JSON(http.StatusOK, utils.PagingRespSuccess(storeApis, &p))
 }
 
 func GetStoreById(c *gin.Context) {
@@ -85,7 +91,7 @@ func UpdateStore(c *gin.Context) {
 	}
 
 	store := models.Store{}
-	err = c.BindJSON(&store)
+	err = c.ShouldBind(&store)
 	if err != nil {
 		c.JSON(http.StatusOK, "Error:"+err.Error())
 		return

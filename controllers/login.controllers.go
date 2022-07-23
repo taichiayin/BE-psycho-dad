@@ -160,6 +160,7 @@ func ValidateFbToken(c *gin.Context) {
 	userInfo, err := getUserInfo(validResp.Data.UserId, fbToken.AccessToken)
 	if err != nil {
 		c.String(http.StatusOK, err.Error())
+		return
 	}
 
 	// db新增用戶
