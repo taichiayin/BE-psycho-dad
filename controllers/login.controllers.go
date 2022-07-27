@@ -1,171 +1,168 @@
 package controllers
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"psycho-dad/models"
 	"psycho-dad/utils"
-	"strconv"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/parnurzeal/gorequest"
 )
 
-type FbToken struct {
-	AccessToken string `json:"accessToken"`
+var (
+	secret                 = "!p@s#y$c%h.o&d?a,d"
+	TokenExpired     error = errors.New("Token過期，請重新登入")
+	TokenNotValidYet error = errors.New("Token未啟用")
+	TokenMalformed   error = errors.New("Token格式錯誤")
+	TokenInvalid     error = errors.New("Toekn無效")
+)
+
+// api請求結構
+type Req struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-type AppToken struct {
-	AppToken string `json:"access_token"`
+// api反饋結構
+type Resp struct {
+	UserId   int    `json:"userId"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Email    string `json:"email"`
+	Token    string `json:"token"`
 }
 
-type ValidResp struct {
-	Data *ValidRespData `json:"data"`
+// jwt payload結構
+type Claims struct {
+	UserId int `json:"userId"`
+	jwt.StandardClaims
 }
 
-type ValidRespData struct {
-	IsValid bool   `json:"is_valid"`
-	UserId  string `json:"user_id"`
+// key結構
+type JWT struct {
+	SigningKey []byte
 }
 
-type UserInfoResp struct {
-	Id      string       `json:"id"`
-	Name    string       `json:"name"`
-	Email   string       `json:"email"`
-	Picture *PictureData `json:"picture"`
+// 建立signkey
+func NewJWT() *JWT {
+	return &JWT{
+		[]byte(secret),
+	}
 }
 
-type PictureData struct {
-	Data *Picture `json:"data"`
+// 建立token
+// HS256
+// claims + key(sign)生成token
+func (j *JWT) CreateToken(claims Claims) (string, error) {
+	// 返回一個token的指標
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString(j.SigningKey)
 }
 
-type Picture struct {
-	Url string `json:"url"`
-}
+// 生成token
+func generateToken(user *models.User) (string, error) {
+	// 建立signkey的JWT結構
+	j := NewJWT()
+	now := time.Now()
 
-// FB secret
-const app_id = "603757541009890"
-const app_secret = "07954a0eca99605ccbfd7f073e2c552b"
-const fbApiUrl_accessToken = "https://graph.facebook.com/v14.0/oauth/access_token?client_id=%s&client_secret=%s&grant_type=%s"
-const fbApiUrl_debugToken = "https://graph.facebook.com/v14.0/debug_token?input_token=%s&access_token=%s"
-
-// const fbApiUrl_userInfo = "https://graph.facebook.com/v14.0/%s"
-const fbApiUrl_userInfo = "https://graph.facebook.com/%s?fields=id,name,email,picture&access_token=%s"
-
-// 獲取應用程式權杖
-func getFBAppToken() (string, error) {
-	strUrl := fmt.Sprintf(fbApiUrl_accessToken, app_id, app_secret, "client_credentials")
-
-	_, body, errs := gorequest.New().
-		Get(strUrl).
-		End()
-	if errs != nil {
-		return "", errors.New("請求失敗")
+	// 建立payload
+	claims := Claims{
+		user.Id,
+		jwt.StandardClaims{
+			NotBefore: now.Add(1 * time.Second).Unix(), // 生效時間
+			ExpiresAt: now.Add(24 * time.Hour).Unix(),  // 過期時間
+			IssuedAt:  now.Unix(),
+			Issuer:    "ginJWT",
+		},
 	}
 
-	appToken := AppToken{}
-
-	err := json.Unmarshal([]byte(body), &appToken)
+	// 依據claims設定生成token
+	token, err := j.CreateToken(claims)
 	if err != nil {
-		return "", errors.New("返回格式錯誤")
+		return "", err
 	}
 
-	return appToken.AppToken, nil
+	return token, nil
 }
 
-// 獲取用戶數據
-func getUserInfo(userId string, accessToken string) (*UserInfoResp, error) {
-	strUrl := fmt.Sprintf(fbApiUrl_userInfo, userId, accessToken)
+// 解析token 返回Claims指標及錯誤
+func (j *JWT) ParserToken(tokenStr string) (*Claims, error) {
+	// Keyfunc是匿名函数类型: type Keyfunc func(*Token) (interface{}, error)
+	// func ParseWithClaims(tokenString string, claims Claims, keyFunc Keyfunc) (*Token, error)
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return j.SigningKey, nil
+	})
 
-	_, body, errs := gorequest.New().
-		Get(strUrl).
-		End()
-
-	if errs != nil {
-		return nil, errors.New("請求失敗")
-	}
-
-	userInfo := UserInfoResp{}
-
-	err := json.Unmarshal([]byte(body), &userInfo)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		// jwt.ValidationError 是一個無效token的錯誤結構
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			// 表示token不可用
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				return nil, TokenMalformed
+				// 表示token過期
+			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
+				return nil, TokenExpired
+				// 表示token格式錯誤
+			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
+				return nil, TokenNotValidYet
+				// 歸類表示token無效
+			} else {
+				return nil, TokenInvalid
+			}
+		}
 	}
 
-	return &userInfo, nil
+	// 解析token中的claims
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, TokenInvalid
 }
 
-// db新增用戶
-func addUserHandle(userInfo *UserInfoResp) {
-	fmt.Println("addUserHanlde", userInfo)
-	fbId, _ := strconv.Atoi(userInfo.Id)
+// 登入
+func Login(c *gin.Context) {
+	req := Req{}
 
-	_, err := models.GetUserByFBId(fbId)
-
-	userStrcut := models.User{}
-	userInfoJson, _ := json.Marshal(userInfo)
-	json.Unmarshal([]byte(userInfoJson), &userStrcut)
-	userStrcut.FbId = userInfo.Id
-	// 找不到新增用戶，已存在就更新
+	// 解析body json
+	err := c.BindJSON(&req)
 	if err != nil {
-		fmt.Println("create user")
-		models.CreateUser(userStrcut)
-	} else {
-		fmt.Println("update user")
-		models.UpdateUserByFBId(fbId, userStrcut)
-	}
-}
-
-// 驗證前端給的token是否有效，並且判斷新增用戶詳情
-func ValidateFbToken(c *gin.Context) {
-	fbToken := FbToken{}
-	err := c.BindJSON(&fbToken)
-	if err != nil {
-		c.JSON(http.StatusOK, err.Error())
-	}
-
-	//
-	app_token, err := getFBAppToken()
-	if err != nil {
-		c.JSON(http.StatusOK, err.Error())
-	}
-
-	// 驗證token
-	strUrl := fmt.Sprintf(fbApiUrl_debugToken, fbToken.AccessToken, app_token)
-	_, body, errs := gorequest.New().
-		Get(strUrl).
-		End()
-
-	if errs != nil {
-		errStr := fmt.Sprintf("%v", errs)
-		c.JSON(http.StatusOK, errStr)
-	}
-
-	validResp := ValidResp{}
-
-	err = json.Unmarshal([]byte(body), &validResp)
-	if err != nil {
-		c.JSON(http.StatusOK, err.Error())
-	}
-
-	// 無效token返回
-	if !validResp.Data.IsValid {
-		c.JSON(http.StatusOK, validResp)
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
 		return
 	}
 
-	// 獲取用戶詳情
-	userInfo, err := getUserInfo(validResp.Data.UserId, fbToken.AccessToken)
+	// find by username
+	user, err := models.FindByUsername(req.Username)
 	if err != nil {
-		c.String(http.StatusOK, err.Error())
+		c.JSON(http.StatusOK, utils.RespError("登入失敗，帳號密碼輸入不正確，請重新輸入！"))
 		return
 	}
 
-	// db新增用戶
-	addUserHandle(userInfo)
+	// 比對密碼是否正確
+	if utils.Md5(req.Password) != user.Password {
+		c.JSON(http.StatusOK, utils.RespError("登入失敗，帳號密碼輸入不正確，請重新輸入！"))
+		return
+	}
 
-	c.JSON(http.StatusOK, utils.RespSuccess(userInfo))
+	// 產生token
+	token, err := generateToken(user)
 
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+		return
+	}
+
+	// 組成反饋api
+	resp := Resp{
+		UserId:   user.Id,
+		Username: user.Username,
+		Avatar:   user.Avatar,
+		Email:    user.Email,
+		Token:    token,
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(resp))
 }

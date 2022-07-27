@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"psycho-dad/models"
 	"psycho-dad/utils"
@@ -12,7 +11,7 @@ import (
 
 func FindAllUsers(c *gin.Context) {
 	users := models.GetAllUsers()
-	fmt.Println("FindAllUsers")
+	// fmt.Println("FindAllUsers")
 	c.JSON(http.StatusOK, utils.RespSuccess(users))
 }
 

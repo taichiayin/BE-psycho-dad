@@ -7,8 +7,8 @@ import (
 )
 
 func AddThumbsRouter(r *gin.RouterGroup) {
-	user := r.Group("/thumbs")
-	user.GET("/:storeId", controllers.GetThumbsCountByStore)
-	user.POST("", controllers.CreateThumb)
-	user.DELETE("/:id", controllers.DeleteThumb)
+	thumbs := r.Group("/thumbs")
+	thumbs.GET("/:storeId", controllers.GetThumbsCountByStore)
+	thumbs.POST("", controllers.CreateThumb)
+	thumbs.DELETE("/:id", controllers.DeleteThumb)
 }

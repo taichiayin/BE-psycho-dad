@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"psycho-dad/config"
 	"psycho-dad/proto"
 
@@ -33,13 +32,13 @@ type Store struct {
 
 type StoreApi struct {
 	Id                 int     `json:"storeId"`
-	Name               string  `json:"storeName"`
+	Name               string  `json:"storeName" form:"storeName"`
 	Introduce          string  `json:"introduce"`
-	TypeId             int     `json:"typeId"`
+	TypeId             int     `json:"typeId" form:"typeId"`
 	TypeName           string  `json:"typeName"`
-	CountyId           int     `json:"countyId"`
+	CountyId           int     `json:"countyId" form:"countyId"`
 	CountyName         string  `json:"countyName"`
-	DistrictId         int     `json:"districtId"`
+	DistrictId         int     `json:"districtId" form:"districtId"`
 	DistrictName       string  `json:"districtName"`
 	Address            string  `json:"address"`
 	Phone              string  `json:"phone"`
@@ -64,34 +63,34 @@ func GetAllStores(storeApi *StoreApi, page int, size int, userId string) ([]Stor
 		Select("stores.*, files.default_img, types.name as type_name, counties.name as county_name, districts.name as district_name , favorites.id as favorite_id")
 
 	if storeApi.Id != 0 {
-		db = db.Where("id = ?", storeApi.Id)
+		db = db.Where("stores.id = ?", storeApi.Id)
 	}
 	if storeApi.Name != "" {
-		db = db.Where("name like ?", "%"+storeApi.Name+"%")
+		db = db.Where("stores.name like ?", "%"+storeApi.Name+"%")
 	}
 	if storeApi.TypeId != 0 {
-		db = db.Where("type_id = ?", storeApi.TypeId)
+		db = db.Where("stores.type_id = ?", storeApi.TypeId)
 	}
 	if storeApi.CountyId != 0 {
-		db = db.Where("county_id = ?", storeApi.CountyId)
+		db = db.Where("stores.county_id = ?", storeApi.CountyId)
 	}
 	if storeApi.TypeId != 0 {
-		db = db.Where("type_id = ?", storeApi.TypeId)
+		db = db.Where("stores.type_id = ?", storeApi.TypeId)
 	}
 	if storeApi.DistrictId != 0 {
-		db = db.Where("district_id = ?", storeApi.DistrictId)
+		db = db.Where("stores.district_id = ?", storeApi.DistrictId)
 	}
 	if storeApi.UserId != 0 {
-		db = db.Where("user_id = ?", storeApi.UserId)
+		db = db.Where("stores.user_id = ?", storeApi.UserId)
 	}
 	if storeApi.IsDads {
-		db = db.Where("is_dads = ?", storeApi.IsDads)
+		db = db.Where("stores.is_dads = ?", storeApi.IsDads)
 	}
 	if storeApi.IsDadsRecommend {
-		db = db.Where("is_dads_recommend = ?", storeApi.IsDadsRecommend)
+		db = db.Where("stores.is_dads_recommend = ?", storeApi.IsDadsRecommend)
 	}
 	if storeApi.IsClosePermanently {
-		db = db.Where("is_close_permanently = ?", storeApi.IsClosePermanently)
+		db = db.Where("stores.is_close_permanently = ?", storeApi.IsClosePermanently)
 	}
 
 	// Join files Table
@@ -232,7 +231,6 @@ func FindPage(db *gorm.DB, dest interface{}, p *proto.Paging) error {
 		return errors.New("paging is nil")
 	} else {
 		err := db.Count(&p.AllCount).Error
-		fmt.Println(p)
 		if err != nil {
 			return err
 		}

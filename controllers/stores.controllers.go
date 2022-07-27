@@ -33,16 +33,15 @@ func GetAllStore(c *gin.Context) {
 
 	storeApi := models.StoreApi{}
 
-	err := c.ShouldBindQuery(&storeApi)
+	err := c.BindQuery(&storeApi)
 
 	if err == nil {
 		fmt.Println(storeApi)
-		// fmt.Println(store.PageIndex)
 	}
 
 	storeApis, p := models.GetAllStores(&storeApi, page, size, userId)
-	fmt.Printf("經度: %f", myLon)
-	fmt.Printf("緯度: %f", mylat)
+	// fmt.Printf("經度: %f", myLon)
+	// fmt.Printf("緯度: %f", mylat)
 	// 計算最短距離，若資料不足則顯示9999
 	for i := 0; i < len(storeApis); i++ {
 		if myLon != 0 && mylat != 0 && storeApis[i].Lon != 0 && storeApis[i].Lat != 0 {

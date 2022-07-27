@@ -2,6 +2,8 @@ package main
 
 import (
 	"psycho-dad/config"
+	"psycho-dad/controllers"
+	"psycho-dad/middleware"
 	"psycho-dad/routes"
 
 	"github.com/gin-contrib/cors"
@@ -16,6 +18,9 @@ func main() {
 	// r.Use(TlsHandler())
 	v1 := r.Group("/v1")
 
+	// middlewar 驗證token
+	v1.Use(middleware.JWTAuth())
+
 	routes.AddUserRouter(v1)
 	routes.AddThumbsRouter(v1)
 	routes.AddStoresRouter(v1)
@@ -23,9 +28,10 @@ func main() {
 	routes.AddTypesRouter(v1)
 	routes.AddCountiesRouter(v1)
 	routes.AddDistrictsRouter(v1)
-	routes.AddLoginRouter(v1)
 	routes.AddUploadRouter(v1)
 	routes.AddImgRouter(v1)
+
+	r.POST("/v1/login", controllers.Login)
 
 	go func() {
 		// 連接資料庫

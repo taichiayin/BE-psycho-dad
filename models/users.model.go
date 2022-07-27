@@ -6,10 +6,13 @@ import (
 )
 
 type User struct {
-	Id    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	FbId  string `json:"fbId"`
+	Id       int    `json:"userId" gorm:"AUTO_INCREMENT"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	FbId     string `json:"fbId"`
+	Password string `json:"password"`
+	Avatar   string `json:"avatar"`
+	IsAdmin  bool   `json:"isAdmin"`
 }
 
 func GetAllUsers() []User {
@@ -41,6 +44,18 @@ func GetUserByFBId(id int) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func FindByUsername(username string) (*User, error) {
+	user := &User{}
+
+	err := config.Conn.Table("Users").Where("username = ?", username).First(user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+
 }
 
 func UpdateUserByFBId(id int, user User) string {
