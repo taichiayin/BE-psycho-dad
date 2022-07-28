@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"psycho-dad/config"
 	"psycho-dad/proto"
 
@@ -168,6 +170,8 @@ func DeleteStore(storeId int) string {
 
 func UpdateStore(storeId int, store Store) error {
 
+	fmt.Println("store", store)
+
 	tx := config.Conn.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -184,13 +188,13 @@ func UpdateStore(storeId int, store Store) error {
 
 	file := &File{}
 
-	err = tx.Where(`store_id = ?`, store.Id).First(file).Error
+	err = tx.Table("files").Where(`store_id = ?`, store.Id).First(file).Error
 	file.DefaultImg = store.DefaultImg
 	file.StoreId = store.Id
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-
+			// files沒有資料，新增
 			err := tx.Table("files").Create(file).Error
 
 			if err != nil {
@@ -210,6 +214,14 @@ func UpdateStore(storeId int, store Store) error {
 		return err
 	}
 
+	// 先刪掉原本的圖片
+	_ = os.Remove("." + file.DefaultImg)
+
+	fmt.Println("store.DefaultImg", store.DefaultImg)
+	fmt.Println("store.Id", store.Id)
+	file.DefaultImg = store.DefaultImg
+	file.StoreId = store.Id
+	// 找到files，更新
 	err = tx.Table("files").Where(`store_id = ?`, file.StoreId).Updates(file).Error
 
 	if err != nil {

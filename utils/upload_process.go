@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,8 +29,8 @@ type FormData struct {
 type UploadFileReq struct{}
 
 func UploadProcess(c *gin.Context) ([]*UploadFile, error) {
-	formInfo := &FormData{}
-	c.Bind(formInfo)
+	// formInfo := &FormData{}
+	// c.Bind(formInfo)
 
 	err := c.Request.ParseMultipartForm(MAX_FILE_SIZE)
 	if err != nil {
@@ -38,8 +39,8 @@ func UploadProcess(c *gin.Context) ([]*UploadFile, error) {
 
 	uploadFiles := []*UploadFile{}
 
-	formdata := c.Request.MultipartForm
-	files := formdata.File[UPLOAD_INPUT]
+	formData := c.Request.MultipartForm
+	files := formData.File[UPLOAD_INPUT]
 
 	for _, f := range files {
 		file, err := f.Open()
@@ -57,10 +58,10 @@ func UploadProcess(c *gin.Context) ([]*UploadFile, error) {
 		originalFileName := f.Filename
 		ext := path.Ext(originalFileName)
 		localPath := "/img"
-		filename := fmt.Sprintf("%v%v", formInfo.FileName, ext)
-		filepath := fmt.Sprintf("/%v", formInfo.StoreId)
-		filepathName := fmt.Sprintf("%v/%v", filepath, filename)
-		err = os.MkdirAll("."+localPath+filepath, os.ModePerm)
+		filename := fmt.Sprintf("%v%v", time.Now().UnixNano(), ext)
+		// filepath := fmt.Sprintf("/%v", formInfo.StoreId)
+		filepathName := fmt.Sprintf("/%v", filename)
+		err = os.MkdirAll("."+localPath, os.ModePerm)
 		if err != nil {
 			return nil, err
 		}

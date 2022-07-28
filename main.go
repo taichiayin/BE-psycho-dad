@@ -29,10 +29,11 @@ func main() {
 	routes.AddCountiesRouter(v1)
 	routes.AddDistrictsRouter(v1)
 	routes.AddUploadRouter(v1)
-	routes.AddImgRouter(v1)
+	// routes.AddImgRouter(v1)
 
 	r.POST("/v1/login", controllers.Login)
 	r.POST("/v1/fblogin", controllers.Fblogin)
+	r.Static("/img", "./img")
 
 	go func() {
 		// 連接資料庫
