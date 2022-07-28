@@ -32,6 +32,7 @@ func main() {
 	routes.AddImgRouter(v1)
 
 	r.POST("/v1/login", controllers.Login)
+	r.POST("/v1/fblogin", controllers.Fblogin)
 
 	go func() {
 		// 連接資料庫

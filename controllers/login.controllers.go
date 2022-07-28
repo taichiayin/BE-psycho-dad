@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"psycho-dad/models"
 	"psycho-dad/utils"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 var (
@@ -18,6 +20,14 @@ var (
 	TokenMalformed   error = errors.New("Token格式錯誤")
 	TokenInvalid     error = errors.New("Toekn無效")
 )
+
+// fb登入請求結構
+type FbLoginReq struct {
+	FbId   string `json:"id"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Avatar string `json:"avatarUrl"`
+}
 
 // api請求結構
 type Req struct {
@@ -31,6 +41,7 @@ type Resp struct {
 	Username string `json:"username"`
 	Avatar   string `json:"avatar"`
 	Email    string `json:"email"`
+	IsAdmin  bool   `json:"isAdmin"`
 	Token    string `json:"token"`
 }
 
@@ -72,8 +83,8 @@ func generateToken(user *models.User) (string, error) {
 	claims := Claims{
 		user.Id,
 		jwt.StandardClaims{
-			NotBefore: now.Add(1 * time.Second).Unix(), // 生效時間
-			ExpiresAt: now.Add(24 * time.Hour).Unix(),  // 過期時間
+			NotBefore: now.Add(-3 * time.Second).Unix(), // 生效時間
+			ExpiresAt: now.Add(24 * time.Hour).Unix(),   // 過期時間
 			IssuedAt:  now.Unix(),
 			Issuer:    "ginJWT",
 		},
@@ -161,6 +172,63 @@ func Login(c *gin.Context) {
 		Username: user.Username,
 		Avatar:   user.Avatar,
 		Email:    user.Email,
+		Token:    token,
+	}
+
+	c.JSON(http.StatusOK, utils.RespSuccess(resp))
+}
+
+func Fblogin(c *gin.Context) {
+	fbLoginReq := &FbLoginReq{}
+	user := &models.User{}
+
+	err := c.ShouldBind(fbLoginReq)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
+
+	fbId, _ := strconv.Atoi(fbLoginReq.FbId)
+	user, err = models.GetUserByFBId(fbId)
+	if err != nil {
+		// fb_id沒找到user
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			myUser := &models.User{
+				FbId:     fbLoginReq.FbId,
+				Email:    fbLoginReq.Email,
+				Username: fbLoginReq.Name,
+			}
+
+			err = models.CreateUser(myUser)
+			if err != nil {
+				// 新增用戶失敗
+				c.JSON(http.StatusOK, utils.RespError(err.Error()))
+				return
+			}
+
+			// 新增用戶成功
+			// c.JSON(http.StatusOK, utils.RespSuccess(user))
+			// return
+		} else {
+			c.JSON(http.StatusOK, utils.RespError(err.Error()))
+			return
+		}
+	}
+
+	// 產生token
+	token, err := generateToken(user)
+
+	if err != nil {
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
+		return
+	}
+
+	// 組成反饋api
+	resp := Resp{
+		UserId:   user.Id,
+		Username: user.Username,
+		Avatar:   user.Avatar,
+		Email:    user.Email,
+		IsAdmin:  user.IsAdmin,
 		Token:    token,
 	}
 

@@ -67,13 +67,13 @@ func UpdateUserByFBId(id int, user User) string {
 	return "UPDATE SUCCESSFUL"
 }
 
-func CreateUser(user User) string {
+func CreateUser(user *User) error {
 	err := config.Conn.Create(&user).Error
 	if err != nil {
-		return err.Error()
+		return err
 	}
 
-	return "CREATE SUCCESSFUL"
+	return nil
 }
 
 func UpdateUser(userId int, user User) string {

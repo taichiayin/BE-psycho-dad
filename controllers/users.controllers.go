@@ -28,7 +28,7 @@ func FindByUserId(c *gin.Context) {
 }
 
 func CreateUser(c *gin.Context) {
-	user := models.User{}
+	user := &models.User{}
 	err := c.BindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusNotAcceptable, "Error: "+err.Error())
