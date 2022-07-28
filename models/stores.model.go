@@ -169,9 +169,7 @@ func DeleteStore(storeId int) string {
 }
 
 func UpdateStore(storeId int, store Store) error {
-
-	fmt.Println("store", store)
-
+	// transiction
 	tx := config.Conn.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -189,12 +187,14 @@ func UpdateStore(storeId int, store Store) error {
 	file := &File{}
 
 	err = tx.Table("files").Where(`store_id = ?`, store.Id).First(file).Error
-	file.DefaultImg = store.DefaultImg
-	file.StoreId = store.Id
+	fmt.Println("file.DefaultImg", file.DefaultImg)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// files沒有資料，新增
+			file.DefaultImg = store.DefaultImg
+			file.StoreId = store.Id
+
 			err := tx.Table("files").Create(file).Error
 
 			if err != nil {
@@ -217,8 +217,6 @@ func UpdateStore(storeId int, store Store) error {
 	// 先刪掉原本的圖片
 	_ = os.Remove("." + file.DefaultImg)
 
-	fmt.Println("store.DefaultImg", store.DefaultImg)
-	fmt.Println("store.Id", store.Id)
 	file.DefaultImg = store.DefaultImg
 	file.StoreId = store.Id
 	// 找到files，更新
