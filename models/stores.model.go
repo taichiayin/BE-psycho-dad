@@ -111,14 +111,23 @@ func GetAllStores(storeApi *StoreApi, page int, size int, userId string) ([]Stor
 	return storeApis, paging
 }
 
-func GetStoreById(storeId int) (*Store, error) {
-	store := &Store{}
-	err := config.Conn.Where("id = ?", storeId).First(store).Error
+func FindById(storeId int, userId int) (*StoreApi, error) {
+	storeApi := &StoreApi{}
+
+	err := config.Conn.Table("Stores").
+		Select("stores.*, files.default_img, types.name as type_name, counties.name as county_name, districts.name as district_name , favorites.id as favorite_id").
+		Joins("left join files on files.store_id = stores.id").
+		Joins("left join types on types.id = stores.type_id").
+		Joins("left join counties on counties.id = stores.county_id ").
+		Joins("left join districts on districts.id = stores.district_id ").
+		Joins("left join favorites on favorites.store_id = stores.id and favorites.user_id = ?", userId).
+		Where("stores.id = ?", storeId).First(storeApi).Error
+	// err := config.Conn.Where("id = ?", storeId).First(store).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return store, nil
+	return storeApi, nil
 }
 
 func CreateStore(store Store) error {

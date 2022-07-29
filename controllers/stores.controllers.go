@@ -56,9 +56,12 @@ func GetAllStore(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PagingRespSuccess(storeApis, &p))
 }
 
-func GetStoreById(c *gin.Context) {
+func FindById(c *gin.Context) {
 	storeId, _ := strconv.Atoi(c.Param("id"))
-	user, err := models.GetStoreById(storeId)
+	userId, _ := c.Get("UserId")
+	userIdInt := userId.(int)
+
+	user, err := models.FindById(storeId, userIdInt)
 	if err != nil {
 		c.JSON(http.StatusOK, utils.RespError(err.Error()))
 		return

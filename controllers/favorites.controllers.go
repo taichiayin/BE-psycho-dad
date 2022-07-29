@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"psycho-dad/models"
 	"psycho-dad/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,8 +14,10 @@ func GetAllFavorites(c *gin.Context) {
 }
 
 func GetFavoritesByUser(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("userId"))
-	res, err := models.GetFavoritesByUser(userId)
+	userId, _ := c.Get("UserId")
+	userIdInt := userId.(int)
+	// userId, _ := strconv.Atoi(c.Param("userId"))
+	res, err := models.GetFavoritesByUser(userIdInt)
 	if err != nil {
 		c.JSON(http.StatusOK, utils.RespError(err.Error()))
 		return
