@@ -14,7 +14,10 @@ var err error
 
 func StartUp() {
 	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
-	dsn := "root:abc123456@tcp(127.0.0.1:3306)/psychoDad?charset=utf8mb4&parseTime=True&loc=Local"
+	// local
+	dsn := "root:taichi0804@tcp(127.0.0.1:3306)/psychodad?charset=utf8mb4&parseTime=True&loc=Local"
+	// deploy
+	// dsn := "root:taichi0804@tcp(127.0.0.1:3306)/psychodad?charset=utf8mb4&parseTime=True&loc=Local"
 	Conn, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})

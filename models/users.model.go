@@ -49,7 +49,7 @@ func GetUserByFBId(id int) (*User, error) {
 func FindByUsername(username string) (*User, error) {
 	user := &User{}
 
-	err := config.Conn.Table("Users").Where("username = ?", username).First(user).Error
+	err := config.Conn.Table("users").Where("username = ?", username).First(user).Error
 	if err != nil {
 		return nil, err
 	}

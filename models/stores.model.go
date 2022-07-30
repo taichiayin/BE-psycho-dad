@@ -114,7 +114,7 @@ func GetAllStores(storeApi *StoreApi, page int, size int, userId string) ([]Stor
 func FindById(storeId int, userId int) (*StoreApi, error) {
 	storeApi := &StoreApi{}
 
-	err := config.Conn.Table("Stores").
+	err := config.Conn.Table("stores").
 		Select("stores.*, files.default_img, types.name as type_name, counties.name as county_name, districts.name as district_name , favorites.id as favorite_id").
 		Joins("left join files on files.store_id = stores.id").
 		Joins("left join types on types.id = stores.type_id").

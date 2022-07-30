@@ -46,7 +46,7 @@ func GetAllFavorites() []Favorite {
 func GetFavoritesByUser(userId int) (*[]FavoriteApi, error) {
 	// var favorites []Favorite
 	favoriteApis := &[]FavoriteApi{}
-	err := config.Conn.Table("Favorites").
+	err := config.Conn.Table("favorites").
 		Select("stores.*, files.default_img, types.name as type_name, counties.name as county_name, districts.name as district_name , stores.id as store_id").
 		Joins("left join stores on favorites.store_id = stores.id").
 		Joins("left join files on files.store_id = stores.id").
@@ -63,7 +63,7 @@ func GetFavoritesByUser(userId int) (*[]FavoriteApi, error) {
 }
 
 func CreateFavorite(favorite Favorite) error {
-	err := config.Conn.Table("Favorites").Create(&favorite).Error
+	err := config.Conn.Table("favorites").Create(&favorite).Error
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func DeleteFavorite(favorite Favorite) error {
 	storeId := favorite.StoreId
 	userId := favorite.UserId
 
-	err := config.Conn.Table("Favorites").Where("user_id = ? and store_id = ?", userId, storeId).Delete(&favorite).Error
+	err := config.Conn.Table("favorites").Where("user_id = ? and store_id = ?", userId, storeId).Delete(&favorite).Error
 	if err != nil {
 		return err
 	}
