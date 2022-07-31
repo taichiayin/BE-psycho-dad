@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"psycho-dad/config"
 	"psycho-dad/controllers"
+	_ "psycho-dad/daemon"
 	"psycho-dad/middleware"
 	"psycho-dad/routes"
 
