@@ -24,6 +24,26 @@ func GetAllStoreForEdit(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.RespSuccess(storeApis))
 }
 
+func FindAllList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	size, _ := strconv.Atoi(c.Query("size"))
+	userId, _ := c.Get("UserId")
+	userIdInt := userId.(int)
+
+	storeList := models.StoreList{}
+
+	err := c.BindQuery(&storeList)
+	if err == nil {
+		fmt.Println(err)
+		// c.JSON(http.StatusOK, utils.RespError(err.Error()))
+	}
+
+	storeLists, p := models.FindAllList(&storeList, page, size, userIdInt)
+
+	c.JSON(http.StatusOK, utils.PagingRespSuccess(storeLists, &p))
+
+}
+
 func GetAllStore(c *gin.Context) {
 	myLon, _ := strconv.ParseFloat(c.Query("lon"), 64)
 	mylat, _ := strconv.ParseFloat(c.Query("lat"), 64)

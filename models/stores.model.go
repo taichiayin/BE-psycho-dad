@@ -58,6 +58,20 @@ type StoreApi struct {
 	FavoriteId         int     `json:"favoriteId"`
 }
 
+type StoreList struct {
+	Id                 int     `json:"storeId"`
+	Name               string  `json:"storeName" form:"storeName"`
+	CountyId           int     `json:"countyId" form:"countyId"`
+	CountyName         string  `json:"countyName"`
+	DistrictId         int     `json:"districtId" form:"districtId"`
+	DistrictName       string  `json:"districtName"`
+	TypeId             int     `json:"typeId" form:"typeId"`
+	IsClosePermanently bool    `json:"isClosePermanently"`
+	DefaultImg         string  `json:"defaultImg"`
+	Dis                float64 `json:"dis" gorm:"-"`
+	FavoriteId         int     `json:"favoriteId"`
+}
+
 func GetAllStores(storeApi *StoreApi, page int, size int, userId string) ([]StoreApi, proto.Paging) {
 
 	storeApis := []StoreApi{}
@@ -109,6 +123,48 @@ func GetAllStores(storeApi *StoreApi, page int, size int, userId string) ([]Stor
 	FindPage(db, &storeApis, &paging)
 
 	return storeApis, paging
+}
+
+//
+func FindAllList(storeList *StoreList, page int, size int, userId int) ([]StoreList, proto.Paging) {
+	storeLists := []StoreList{}
+	db := config.Conn.Table("stores").
+		Select("stores.*, files.default_img, counties.name as county_name, districts.name as district_name , favorites.id as favorite_id")
+
+	if storeList.Id != 0 {
+		db = db.Where("stores.id = ?", storeList.Id)
+	}
+	if storeList.Name != "" {
+		db = db.Where("stores.name like ?", "%"+storeList.Name+"%")
+	}
+	if storeList.TypeId != 0 {
+		db = db.Where("stores.type_id = ?", storeList.TypeId)
+	}
+	if storeList.CountyId != 0 {
+		db = db.Where("stores.county_id = ?", storeList.CountyId)
+	}
+	if storeList.TypeId != 0 {
+		db = db.Where("stores.type_id = ?", storeList.TypeId)
+	}
+	if storeList.DistrictId != 0 {
+		db = db.Where("stores.district_id = ?", storeList.DistrictId)
+	}
+	if storeList.IsClosePermanently {
+		db = db.Where("stores.is_close_permanently = ?", storeList.IsClosePermanently)
+	}
+	db.Joins("left join files on files.store_id = stores.id").
+		Joins("left join types on types.id = stores.type_id").
+		Joins("left join counties on counties.id = stores.county_id ").
+		Joins("left join districts on districts.id = stores.district_id ").
+		Joins("left join favorites on favorites.store_id = stores.id and favorites.user_id = ?", userId)
+
+	paging := proto.Paging{}
+	paging.PageIndex = int64(page)
+	paging.PageSize = int64(size)
+
+	FindPage(db, &storeLists, &paging)
+
+	return storeLists, paging
 }
 
 func FindById(storeId int, userId int) (*StoreApi, error) {
