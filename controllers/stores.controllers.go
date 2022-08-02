@@ -115,7 +115,7 @@ func UpdateStore(c *gin.Context) {
 	store := models.Store{}
 	err = c.ShouldBind(&store)
 	if err != nil {
-		c.JSON(http.StatusOK, "Error:"+err.Error())
+		c.JSON(http.StatusOK, utils.RespError(err.Error()))
 		return
 	}
 

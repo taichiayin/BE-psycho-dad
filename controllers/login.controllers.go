@@ -172,6 +172,7 @@ func Login(c *gin.Context) {
 		Username: user.Username,
 		Avatar:   user.Avatar,
 		Email:    user.Email,
+		IsAdmin:  user.IsAdmin,
 		Token:    token,
 	}
 
