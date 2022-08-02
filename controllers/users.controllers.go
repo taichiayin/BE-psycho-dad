@@ -31,12 +31,12 @@ func CreateUser(c *gin.Context) {
 	user := &models.User{}
 	err := c.BindJSON(&user)
 	if err != nil {
-		c.JSON(http.StatusNotAcceptable, "Error: "+err.Error())
+		c.JSON(http.StatusNotAcceptable, utils.RespError(err.Error()))
 		return
 	}
 
 	models.CreateUser(user)
-	c.JSON(http.StatusOK, "CREATE SUCCESSFUL")
+	c.JSON(http.StatusOK, utils.RespSuccess(nil))
 }
 
 func UpdateUser(c *gin.Context) {

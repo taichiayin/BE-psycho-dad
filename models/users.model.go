@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"psycho-dad/config"
+	"psycho-dad/utils"
 )
 
 type User struct {
@@ -68,7 +69,9 @@ func UpdateUserByFBId(id int, user User) string {
 }
 
 func CreateUser(user *User) error {
-	err := config.Conn.Create(&user).Error
+	user.Password = utils.Md5(user.Password)
+
+	err := config.Conn.Table("users").Create(&user).Error
 	if err != nil {
 		return err
 	}

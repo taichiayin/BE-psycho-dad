@@ -32,6 +32,7 @@ func main() {
 	routes.AddDistrictsRouter(v1)
 	routes.AddUploadRouter(v1)
 
+	r.POST("/v1/users", controllers.CreateUser)
 	r.POST("/v1/login", controllers.Login)
 	r.POST("/v1/fblogin", controllers.Fblogin)
 	r.Static("/img", "./img")
